@@ -1,8 +1,10 @@
+from pprint import pprint
 import os
 
 import requests
+import telegram
 from telegram.ext import CommandHandler, Updater
-from telegram import ReplyKeyboardMarkup
+from telegram import ReplyKeyboardMarkup, Bot
 
 from dotenv import load_dotenv
 
@@ -16,6 +18,11 @@ RETRY_TIME = 600
 ENDPOINT = 'https://practicum.yandex.ru/api/user_api/homework_statuses/'
 HEADERS = {'Authorization': f'OAuth {PRACTICUM_TOKEN}'}
 
+### Проверка работы практикум Токена
+payload = {'from_date': 1640446000} # 25 декабря 2021
+h_status = requests.get(url=ENDPOINT, headers=HEADERS, params=payload)
+pprint(h_status.json().get('homeworks'))
+###
 
 HOMEWORK_STATUSES = {
     'approved': 'Работа проверена: ревьюеру всё понравилось. Ура!',
@@ -25,12 +32,14 @@ HOMEWORK_STATUSES = {
 
 
 def send_message(bot, message):
+    pass
     # Отправляет сообщение в Телеграм чат (TELEGRAM_CHAT_ID)
     # Принимает на вход два параметра экземпляр класса Bot и строка с текстом сообщения
     ...
 
 
 def get_api_answer(current_timestamp):
+    pass
     # Запрос к единственному эндпоинту API
     # В случае успешного запроса венуть ответ API и преобразовать json()
     timestamp = current_timestamp or int(time.time())
@@ -40,6 +49,7 @@ def get_api_answer(current_timestamp):
 
 
 def check_response(response):
+    pass
     # Проверка ответа API на корректность.
     # В качестве параметра ответ API приведенный к типам данных Python
     # ключ 'homeworks'
@@ -47,6 +57,7 @@ def check_response(response):
 
 
 def parse_status(homework):
+    pass
     # Извлекает из информации статус конкретной домашней работы
     # Получает только один элемент из списка домашних работ
     # В случае успеха возвращает в Телеграм строку из словаря 'HOMEWORK_STATUSES'
@@ -63,12 +74,14 @@ def parse_status(homework):
 
 
 def check_tokens():
+    pass
     # Проверка доступности переменных окружения
     # Если отсутсвует хотябы одна переменная вернуть False 
     ...
 
 
 def main():
+    pass
     """Основная логика работы бота."""
     # Сделать запрос API
     # Проверить ответ
@@ -98,5 +111,5 @@ def main():
             ...
 
 
-if __name__ == '__main__':
-    main()
+# if __name__ == '__main__':
+#    main()
