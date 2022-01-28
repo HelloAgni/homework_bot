@@ -40,45 +40,69 @@ logging.basicConfig(
     format='%(asctime)s, %(levelname)s, %(message)s, %(name)s'
 )
 logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
 logger.addHandler(logging.StreamHandler())
 
 
 def send_message(bot, message):
+    """Бот отправляет сообщение в Телеграм чат"""
     pass
     # Отправляет сообщение в Телеграм чат (TELEGRAM_CHAT_ID)
     # Принимает на вход два параметра экземпляр класса Bot и строка с текстом сообщения
-    ...
+    try:
+        bot.send_message(chat_id=TELEGRAM_CHAT_ID, text=message)
+        logger.info('Отправка сообщения в Телеграм чат')
+    except Exception:
+        logger.error('Ошибка отправки сообщения')
 
 
 def get_api_answer(current_timestamp):
-
+    """Запрос к эндпоинту API"""
     # Запрос к единственному эндпоинту API
     # В случае успешного запроса венуть ответ API и преобразовать json()
     timestamp = current_timestamp or int(time.time())
-    headers = HEADERS
+    #headers = HEADERS
     params = {'from_date': timestamp}
     try:
-        response = requests.get(url=ENDPOINT, headers=headers, params=params)
+        response = requests.get(url=ENDPOINT, headers=HEADERS, params=params)
         if response.status_code != 200:
-            logger.error
-            raise ValueError
+            error_message = (f'Сбой в работе: URL {ENDPOINT} недоступен'
+                             f'Код ответа API: {response.status_code}')
+            logger.error(error_message)
+            raise Exception(error_message)
         return response.json()
-    except requests.exceptions.RequestException as error:
-        api_answer_error = f'Код API (RequestException): {error}'
-        logger.error(api_answer_error)
-        raise ValueError
+    except requests.exceptions.RequestException:
+        error_message = f'Сбой в работе: URL {ENDPOINT} недоступен'
+        logger.error(error_message)
+        raise Exception(error_message)
         # pass
     ...
 
 
 def check_response(response):
-    pass
+    """Проверка ответа API на корректность"""
+    # pass
     # Проверка ответа API на корректность.
     # В качестве параметра ответ API приведенный к типам данных Python
     # ключ 'homeworks'
     # homework_statuses = requests.get(url, headers=headers, params=payload)
     # print(homework_statuses.json())
-    ...
+    if not isinstance(response, dict):
+        error_message = 'Ответ API не является словарем'
+        logger.error(error_message)
+        raise TypeError(error_message)
+    try:
+        homework = response['homeworks']
+        # if len(homework) == 0:
+        if homework == []:    
+            error_message = 'В ответе API нет домашнего задания'
+            logger.error(error_message)
+            raise Exception(error_message)
+    except KeyError:
+        error_message = 'Ответ не содержит ключ ["homeworks"]'
+        logger.error(error_message)
+        raise Exception(error_message)
+    return response['homeworks'][0]        
 
 
 def parse_status(homework):
