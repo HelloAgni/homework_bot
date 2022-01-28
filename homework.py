@@ -106,19 +106,23 @@ def check_response(response):
 
 
 def parse_status(homework):
-    pass
+    """Извлечение из информации статуса конкретной домашней работы"""
     # Извлекает из информации статус конкретной домашней работы
     # Получает только один элемент из списка домашних работ
     # В случае успеха возвращает в Телеграм строку из словаря 'HOMEWORK_STATUSES'
-    homework_name = ...
-    homework_status = ...
-
-    ...
-
-    verdict = ...
-
-    ...
-
+    homeworks_keys = ['status', 'homework_name']
+    for key in homeworks_keys:
+        if key not in homework:
+            error_message = f'Нет ключа {key}'
+            logger.error(error_message)
+            raise KeyError(error_message)    
+    homework_status = homework['status']
+    homework_name = homework['homework_name']
+    if homework_status not in HOMEWORK_STATUSES:
+        error_message = 'Неизвестый статус домашнего задания'
+        logger.error(error_message)
+        raise KeyError(error_message)    
+    verdict = HOMEWORK_STATUSES[homework_status]
     return f'Изменился статус проверки работы "{homework_name}". {verdict}'
 
 
@@ -136,28 +140,32 @@ def main():
     # Если есть обновления получить статус работы из обновления
     # и отправить в Телеграм
     # Подождать время и сделать новый запрос
-    ...
     bot = telegram.Bot(token=TELEGRAM_TOKEN)
     current_timestamp = int(time.time())
-    tmp_status = 'reviewing'
-    errors = True
+    bot.send_message(chat_id=TELEGRAM_CHAT_ID, text='Бот активирован!')
+    # tmp_status = 'reviewing'
+    # errors = True
     # bot.send_message(chat_id=TELEGRAM_CHAT_ID, text='Проверка статуса!')
-    ...
+
     while True:
         try:
             response = get_api_answer(ENDPOINT, current_timestamp)
-            
-            ...
-
-            current_timestamp = ...
-            time.sleep(RETRY_TIME)
-
+            homework = check_response(response)
+            message = parse_status(homework)
+            send_message(bot, message)
+            current_timestamp = response.get('current_date')
         except Exception as error:
             message = f'Сбой в работе программы: {error}'
-            ...
             time.sleep(RETRY_TIME)
+            try:
+                bot.send_message(chat_id=TELEGRAM_CHAT_ID, text=message)
+            except Exception:
+                error_message = 'Ошибка взаимодействия'
+                logger.error(error_message)            
         else:
-            ...
+            message = 'Сообщение отправлено в Телеграм чат'
+            logger.info(message)
+            time.sleep(RETRY_TIME)
 
 
 if __name__ == '__main__':
