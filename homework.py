@@ -1,11 +1,10 @@
-
-import time
-import os
 import logging
+import os
+import time
+
 import requests
 import telegram
 
-from pprint import pprint
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -30,22 +29,28 @@ logging.basicConfig(
     filemode='w',
     format='%(asctime)s, %(levelname)s, %(message)s, %(name)s'
 )
+
 logger = logging.getLogger(__name__)
-logger.setLevel(logging.INFO)
 logger.addHandler(logging.StreamHandler())
 
 
+class NegativeStatusCode(Exception):
+    """Ошибка статуса ответа сервера."""
+
+    pass
+
+
 def send_message(bot, message):
-    """Бот отправляет сообщение в Телеграм чат"""
+    """Бот отправляет сообщение в Телеграм чат."""
     try:
         bot.send_message(chat_id=TELEGRAM_CHAT_ID, text=message)
-        logger.info('Отправка сообщения в Телеграм чат')
+        logger.info('Отпралено сообщение в Телеграм чат')
     except Exception:
-        logger.error('Ошибка отправки сообщения')
+        logger.error('Не удалось отправить сообщение')
 
 
 def get_api_answer(current_timestamp):
-    """Запрос к эндпоинту API"""
+    """Запрос к эндпоинту API."""
     timestamp = current_timestamp or int(time.time())
     params = {'from_date': timestamp}
     try:
@@ -54,23 +59,23 @@ def get_api_answer(current_timestamp):
             error_message = (f'Сбой в работе: URL {ENDPOINT} недоступен'
                              f'Код ответа API: {response.status_code}')
             logger.error(error_message)
-            raise Exception(error_message)
+            raise NegativeStatusCode(error_message)
         return response.json()
-    except requests.exceptions.RequestException:
+    except Exception:
         error_message = f'Сбой в работе: URL {ENDPOINT} недоступен'
         logger.error(error_message)
         raise Exception(error_message)
 
 
 def check_response(response):
-    """Проверка ответа API на корректность"""
+    """Проверка ответа API на корректность."""
     if not isinstance(response, dict):
         error_message = 'Ответ API не является словарем'
         logger.error(error_message)
         raise TypeError(error_message)
     try:
         homework = response['homeworks']
-        if homework == []:    
+        if homework == []:
             error_message = 'В ответе API нет домашнего задания'
             logger.error(error_message)
             raise Exception(error_message)
@@ -78,71 +83,63 @@ def check_response(response):
         error_message = 'Ответ не содержит ключ ["homeworks"]'
         logger.error(error_message)
         raise Exception(error_message)
-    return response['homeworks'][0]        
+    return response['homeworks'][0]
 
 
 def parse_status(homework):
-    """Извлечение из информации статуса конкретной домашней работы
-       В случае успеха возвращает в Телеграм строку из словаря "HOMEWORK_STATUSES" """
+    """
+    Извлечение из информации статуса конкретной домашней работы.
+    В случае успеха возвращает строку из словаря "HOMEWORK_STATUSES".
+    """
     homeworks_keys = ['status', 'homework_name']
     for key in homeworks_keys:
         if key not in homework:
             error_message = f'Нет ключа {key}'
             logger.error(error_message)
-            raise KeyError(error_message)    
+            raise KeyError(error_message)
     homework_status = homework['status']
     homework_name = homework['homework_name']
     if homework_status not in HOMEWORK_STATUSES:
         error_message = 'Неизвестый статус домашнего задания'
         logger.error(error_message)
-        raise KeyError(error_message)    
+        raise KeyError(error_message)
     verdict = HOMEWORK_STATUSES[homework_status]
     return f'Изменился статус проверки работы "{homework_name}". {verdict}'
 
 
 def check_tokens():
-    """Проверка доступности переменных окружения
-       Если отсутсвует хотябы одна переменная вернуть False""" 
-    tokens = True
-    #if PRACTICUM_TOKEN is None:
-    #    tokens = False
-    #    logger.critical(f'Отсутсвует переменная окружения PRACTICUM_TOKEN')
-    #if TELEGRAM_TOKEN is None:
-    #    tokens = False
-    #    logger.critical(f'Отсутсвует переменная окружения TELEGRAM_TOKEN')
-    #if TELEGRAM_CHAT_ID is None:
-    #    tokens = False
-    #    logger.critical(f'Отсутсвует переменная окружения TELEGRAM_CHAT_ID')
-    tokens_list = [PRACTICUM_TOKEN, TELEGRAM_TOKEN, TELEGRAM_CHAT_ID]
-    if None in tokens_list:
-        logger.critical(f'Отсутсвует токен')
+    """
+    Проверка доступности переменных окружения.
+    Если отсутсвует хотябы одна переменная вернуть False.
+    """
+    if None in (PRACTICUM_TOKEN, TELEGRAM_TOKEN, TELEGRAM_CHAT_ID):
+        logger.critical('Отсутсвует токен')
         return False
-    return tokens
+    return True
 
 
-def main():    
+def main():
     """Основная логика работы бота."""
+    if check_tokens() is False:
+        raise ValueError
     bot = telegram.Bot(token=TELEGRAM_TOKEN)
     current_timestamp = int(time.time())
     bot.send_message(chat_id=TELEGRAM_CHAT_ID, text='Бот активирован!')
     while True:
         try:
-            response = get_api_answer(ENDPOINT, current_timestamp)
+            response = get_api_answer(current_timestamp)
             homework = check_response(response)
             message = parse_status(homework)
             send_message(bot, message)
             current_timestamp = response.get('current_date')
         except Exception as error:
             message = f'Сбой в работе программы: {error}'
-            time.sleep(RETRY_TIME)
-            try:
-                bot.send_message(chat_id=TELEGRAM_CHAT_ID, text=message)
-            except Exception:
-                error_message = 'Ошибка взаимодействия'
-                logger.error(error_message)            
+            bot.send_message(chat_id=TELEGRAM_CHAT_ID, text=message)
+            logger.error(message)
         else:
-            message = 'Сообщение отправлено в Телеграм чат'
+            message = 'Сообщение успешно отправлено'
             logger.info(message)
+        finally:
             time.sleep(RETRY_TIME)
 
 
