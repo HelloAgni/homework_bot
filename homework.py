@@ -15,6 +15,7 @@ load_dotenv()
 PRACTICUM_TOKEN = os.getenv('PRACTICUM_TOKEN')
 TELEGRAM_TOKEN = os.getenv('TELEGRAM_TOKEN')
 TELEGRAM_CHAT_ID = os.getenv('TELEGRAM_CHAT_ID')
+
 TELEGRAM_RETRY_TIME = 600
 ENDPOINT = 'https://practicum.yandex.ru/api/user_api/homework_statuses/'
 HEADERS = {'Authorization': f'OAuth {PRACTICUM_TOKEN}'}
@@ -115,7 +116,7 @@ def check_tokens():
             f'Отсутсвует токен {PRACTICUM_TOKEN=},'
             f'{TELEGRAM_TOKEN=},'
             f'{TELEGRAM_CHAT_ID=}'
-        )  # или for tokens in (...): f'{tokens}'
+        )
         return False
     return True
 
