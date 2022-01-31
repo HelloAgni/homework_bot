@@ -111,7 +111,11 @@ def check_tokens():
     Если отсутсвует хотябы одна переменная вернуть False.
     """
     if None in (PRACTICUM_TOKEN, TELEGRAM_TOKEN, TELEGRAM_CHAT_ID):
-        logger.critical('Отсутсвует токен')
+        logger.critical(
+            f'Отсутсвует токен {PRACTICUM_TOKEN=},'
+            f'{TELEGRAM_TOKEN=},'
+            f'{TELEGRAM_CHAT_ID=}'
+        )  # или for tokens in (...): f'{tokens}'
         return False
     return True
 
