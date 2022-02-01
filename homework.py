@@ -15,7 +15,6 @@ load_dotenv()
 PRACTICUM_TOKEN = os.getenv('PRACTICUM_TOKEN')
 TELEGRAM_TOKEN = os.getenv('TELEGRAM_TOKEN')
 TELEGRAM_CHAT_ID = os.getenv('TELEGRAM_CHAT_ID')
-
 TELEGRAM_RETRY_TIME = 600
 ENDPOINT = 'https://practicum.yandex.ru/api/user_api/homework_statuses/'
 HEADERS = {'Authorization': f'OAuth {PRACTICUM_TOKEN}'}
@@ -112,12 +111,11 @@ def check_tokens():
     Если отсутсвует хотябы одна переменная вернуть False.
     """
     if None in (PRACTICUM_TOKEN, TELEGRAM_TOKEN, TELEGRAM_CHAT_ID):
-        logger.critical(
-            f'Отсутсвует токен {PRACTICUM_TOKEN=},'
-            f'{TELEGRAM_TOKEN=},'
-            f'{TELEGRAM_CHAT_ID=}'
-        )
-        return False
+        logger.critical(f'Отсутсвует токен: PRACTICUM_TOKEN={PRACTICUM_TOKEN},'
+                        f'TELEGRAM_TOKEN={TELEGRAM_TOKEN},'
+                        f'TELEGRAM_CHAT_ID={TELEGRAM_CHAT_ID}'
+                        )
+        return False  # с globals() не прошли тесты либо не правильно сделал...
     return True
 
 
