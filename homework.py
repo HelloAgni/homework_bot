@@ -4,11 +4,11 @@ import time
 
 import requests
 import telegram
-
 from dotenv import load_dotenv
-from exceptions import NegativeStatusCode
-from telegram import TelegramError
 from requests.exceptions import RequestException
+from telegram import TelegramError
+
+from exceptions import ErrorSendMessage, NegativeStatusCode, UrlError
 
 load_dotenv()
 
@@ -42,7 +42,9 @@ def send_message(bot, message):
         bot.send_message(chat_id=TELEGRAM_CHAT_ID, text=message)
         logger.info('Отпралено сообщение в Телеграм чат')
     except TelegramError:
-        logger.error('Не удалось отправить сообщение')
+        error_message = 'Не удалось отправить сообщение'
+        logger.error(error_message)
+        raise ErrorSendMessage(error_message)
 
 
 def get_api_answer(current_timestamp):
@@ -54,6 +56,7 @@ def get_api_answer(current_timestamp):
     except RequestException:
         error_message = f'Сбой в работе: URL {ENDPOINT} недоступен'
         logger.error(error_message)
+        raise UrlError(error_message)
     if response.status_code != 200:
         error_message = (f'Сбой в работе: URL {ENDPOINT} недоступен'
                          f'Код ответа API: {response.status_code}')
@@ -110,19 +113,26 @@ def check_tokens():
     Проверка доступности переменных окружения.
     Если отсутсвует хотябы одна переменная вернуть False.
     """
-    if None in (PRACTICUM_TOKEN, TELEGRAM_TOKEN, TELEGRAM_CHAT_ID):
-        logger.critical(f'Отсутсвует токен: PRACTICUM_TOKEN={PRACTICUM_TOKEN},'
-                        f'TELEGRAM_TOKEN={TELEGRAM_TOKEN},'
-                        f'TELEGRAM_CHAT_ID={TELEGRAM_CHAT_ID}'
-                        )
-        return False  # с globals() не прошли тесты либо не правильно сделал...
+    Tokens = {
+        'PRACTICUM_TOKEN': PRACTICUM_TOKEN,
+        'TELEGRAM_TOKEN': TELEGRAM_TOKEN,
+        'TELEGRAM_CHAT_ID': TELEGRAM_CHAT_ID
+    }
+    error_message = 'Отсутсвует токен:'
+    for keys, values in Tokens.items():
+        if values == "None":
+            logger.critical(f'{error_message} {keys}')
+            return False
+        elif values is None:
+            logger.critical(f'{error_message} {keys}')
+            return False
     return True
 
 
 def main():
     """Основная логика работы бота."""
     if check_tokens() is False:
-        raise ValueError
+        raise ValueError('Отсутсвует переменная окружения')
     bot = telegram.Bot(token=TELEGRAM_TOKEN)
     current_timestamp = int(time.time())
     bot.send_message(chat_id=TELEGRAM_CHAT_ID, text='Бот активирован!')
