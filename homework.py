@@ -75,16 +75,20 @@ def check_response(response):
         error_message = 'Ответ API не является словарем'
         logger.error(error_message)
         raise TypeError(error_message)
-    homework = response['homeworks']
-    if len(homework) == 0:
-        error_message = 'В ответе API нет домашнего задания'
-        logger.error(error_message)
-        raise IndexError(error_message)
     if 'homeworks' not in response:
         error_message = 'Ответ не содержит ключ ["homeworks"]'
         logger.error(error_message)
         raise KeyError(error_message)
-    return response['homeworks'][0]
+    homeworks = response['homeworks']
+    if not isinstance(homeworks, list):
+        error_message = 'Ответ API не является списком'
+        logger.error(error_message)
+        raise TypeError(error_message)
+    if len(homeworks) == 0:
+        error_message = 'В ответе API нет домашнего задания'
+        logger.error(error_message)
+        raise IndexError(error_message)
+    return response
 
 
 def parse_status(homework):
@@ -92,7 +96,7 @@ def parse_status(homework):
     Извлечение из информации статуса конкретной домашней работы.
     В случае успеха возвращает строку из словаря "HOMEWORK_STATUSES".
     """
-    homeworks_keys = ['status', 'homework_name']
+    homeworks_keys = ('status', 'homework_name')
     for key in homeworks_keys:
         if key not in homework:
             error_message = f'В словаре "homeworks" нет ключа {key}'
@@ -140,7 +144,7 @@ def main():
         try:
             response = get_api_answer(current_timestamp)
             homework = check_response(response)
-            message = parse_status(homework)
+            message = parse_status(homework['homeworks'][0])
             send_message(bot, message)
             current_timestamp = response.get(
                 'current_date') or int(time.time())
