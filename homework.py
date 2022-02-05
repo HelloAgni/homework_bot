@@ -150,7 +150,6 @@ def main():
                 'current_date') or int(time.time())
         except Exception as error:
             message = f'Сбой в работе программы: {error}'
-            bot.send_message(chat_id=TELEGRAM_CHAT_ID, text=message)
             logger.exception(message)
         else:
             message = 'Сообщение успешно отправлено'
