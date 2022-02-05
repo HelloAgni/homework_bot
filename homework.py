@@ -15,8 +15,7 @@ load_dotenv()
 PRACTICUM_TOKEN = os.getenv('PRACTICUM_TOKEN')
 TELEGRAM_TOKEN = os.getenv('TELEGRAM_TOKEN')
 TELEGRAM_CHAT_ID = os.getenv('TELEGRAM_CHAT_ID')
-# TELEGRAM_RETRY_TIME = 600
-TELEGRAM_RETRY_TIME = 1500
+TELEGRAM_RETRY_TIME = 600
 ENDPOINT = 'https://practicum.yandex.ru/api/user_api/homework_statuses/'
 HEADERS = {'Authorization': f'OAuth {PRACTICUM_TOKEN}'}
 
@@ -150,7 +149,8 @@ def main():
             current_timestamp = response.get(
                 'current_date') or int(time.time())
         except Exception as error:
-            message = f'Сбой в работе программы: {error}'
+            # message = f'Сбой в работе программы: {error}'
+            message = f'Сбой программы: {error}'
             bot.send_message(chat_id=TELEGRAM_CHAT_ID, text=message)
             logger.exception(message)
         else:
