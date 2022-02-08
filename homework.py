@@ -40,7 +40,7 @@ def send_message(bot, message):
     """Бот отправляет сообщение в Телеграм чат."""
     try:
         bot.send_message(chat_id=TELEGRAM_CHAT_ID, text=message)
-        logger.info('Отпралено сообщение в Телеграм чат')
+        logger.info('Отправлено сообщение в Телеграм чат')
     except TelegramError:
         error_message = 'Не удалось отправить сообщение'
         logger.error(error_message)
@@ -140,6 +140,7 @@ def main():
     bot = telegram.Bot(token=TELEGRAM_TOKEN)
     current_timestamp = int(time.time())
     bot.send_message(chat_id=TELEGRAM_CHAT_ID, text='Бот активирован!')
+    message_onetime = ''
     while True:
         try:
             response = get_api_answer(current_timestamp)
@@ -151,6 +152,9 @@ def main():
         except Exception as error:
             message = f'Сбой в работе программы: {error}'
             logger.exception(message)
+            if str(message_onetime) != str(error):
+                send_message(bot, message)
+                message_onetime = error
         else:
             message = 'Сообщение успешно отправлено'
             logger.info(message)
